@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio - ChatGPT Trading Experiment{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-briefcase me-2"></i>Portfolio Holdings</h2>
+</div>
+
+{% if data.portfolio %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Current Holdings</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Date</th>
+                                <th>Ticker</th>
+                                <th>Shares</th>
+                                <th>Buy Price</th>
+                                <th>Current Price</th>
+                                <th>Stop Loss</th>
+                                <th>Total Equity</th>
+                                <th>Cash Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data.portfolio[-20:] %}
+                            <tr {% if row.Ticker == 'TOTAL' %}class="table-info"{% endif %}>
+                                <td>{{ row.Date or '--' }}</td>
+                                <td>
+                                    {% if row.Ticker == 'TOTAL' %}
+                                        <strong>{{ row.Ticker }}</strong>
+                                    {% else %}
+                                        {{ row.Ticker or '--' }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ row.Shares or '--' }}</td>
+                                <td>${{ "%.2f"|format(row['Buy Price'] or 0) if row['Buy Price'] else '--' }}</td>
+                                <td>${{ "%.2f"|format(row['Current Price'] or 0) if row['Current Price'] else '--' }}</td>
+                                <td>${{ "%.2f"|format(row['Stop Loss'] or 0) if row['Stop Loss'] else '--' }}</td>
+                                <td>
+                                    {% if row['Total Equity'] %}
+                                        <strong>${{ "%.2f"|format(row['Total Equity']) }}</strong>
+                                    {% else %}
+                                        --
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if row['Cash Balance'] %}
+                                        ${{ "%.2f"|format(row['Cash Balance']) }}
+                                    {% else %}
+                                        --
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                <h5>No Portfolio Data Found</h5>
+                <p class="text-muted">Portfolio data will appear once CSV files are loaded.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

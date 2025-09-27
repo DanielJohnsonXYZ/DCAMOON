@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white p-5 rounded mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="container-fluid">
+                <h1 class="display-4"><i class="fas fa-robot me-3"></i>ChatGPT Trading Dashboard</h1>
+                <p class="lead">Live tracking of an AI-powered micro-cap stock trading experiment</p>
+                <p class="mb-0">Started with $100 • AI makes all trading decisions • Real money, real results</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                <h5 class="card-title">Total Equity</h5>
+                <h3>${{ "%.2f"|format(stats.total_equity or 0) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-wallet fa-2x mb-2"></i>
+                <h5 class="card-title">Cash Balance</h5>
+                <h3>${{ "%.2f"|format(stats.cash_balance or 0) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                <h5 class="card-title">Performance</h5>
+                <h3 class="{% if stats.return_pct > 0 %}positive{% else %}negative{% endif %}">
+                    {% if stats.return_pct is defined %}
+                        {{ "%.1f"|format(stats.return_pct) }}%
+                    {% else %}
+                        --
+                    {% endif %}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-exchange-alt fa-2x mb-2"></i>
+                <h5 class="card-title">Total Trades</h5>
+                <h3>{{ stats.total_trades or 0 }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if chart_data %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-area me-2"></i>Performance Chart</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <img src="data:image/png;base64,{{ chart_data }}" class="img-fluid" alt="Performance Chart">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                <h5>No Trading Data Available</h5>
+                <p class="text-muted">Charts will appear once trading data is loaded from CSV files.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>About This Experiment</h5>
+            </div>
+            <div class="card-body">
+                <p>This is a 6-month live trading experiment where ChatGPT manages a real-money micro-cap portfolio.</p>
+                <ul>
+                    <li>Started with $100 initial investment</li>
+                    <li>AI makes all trading decisions</li>
+                    <li>Focus on micro-cap stocks (&lt;$300M market cap)</li>
+                    <li>Automated stop-loss protection</li>
+                    <li>Weekly deep research analysis</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-clock me-2"></i>System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Last Updated:</strong>
+                    </div>
+                    <div class="col-6">
+                        {{ stats.last_updated }}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <strong>Experiment Status:</strong>
+                    </div>
+                    <div class="col-6">
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <strong>Data Source:</strong>
+                    </div>
+                    <div class="col-6">
+                        Live CSV Files
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

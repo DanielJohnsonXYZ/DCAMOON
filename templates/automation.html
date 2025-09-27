@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Automation - ChatGPT Trading Experiment{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-robot me-2"></i>Trading Automation</h2>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Automated Trading Controls</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> Automated trading requires an OpenAI API key to be configured.
+                </div>
+                
+                <div class="mb-3">
+                    <label for="apiKey" class="form-label">OpenAI API Key</label>
+                    <input type="password" class="form-control" id="apiKey" placeholder="sk-...">
+                    <div class="form-text">Your API key is used locally and not stored on the server.</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="model" class="form-label">Model</label>
+                    <select class="form-select" id="model">
+                        <option value="gpt-4">GPT-4 (Recommended)</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    </select>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="dryRun" checked>
+                    <label class="form-check-label" for="dryRun">
+                        Dry Run Mode (Test only, no actual trades)
+                    </label>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex">
+                    <button class="btn btn-primary" id="runAutomation">
+                        <i class="fas fa-play me-2"></i>Run Automated Trading
+                    </button>
+                    <button class="btn btn-outline-secondary" id="testConnection">
+                        <i class="fas fa-check me-2"></i>Test API Connection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">How It Works</h5>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li class="mb-2">Loads current portfolio data</li>
+                    <li class="mb-2">Generates trading prompt with market rules</li>
+                    <li class="mb-2">Sends prompt to ChatGPT API</li>
+                    <li class="mb-2">Parses AI trading recommendations</li>
+                    <li class="mb-2">Validates and executes trades</li>
+                </ol>
+                
+                <div class="mt-3">
+                    <h6>Trading Rules:</h6>
+                    <ul class="small text-muted">
+                        <li>Micro-cap focus (&lt;$300M)</li>
+                        <li>Stop-loss protection</li>
+                        <li>Conservative position sizing</li>
+                        <li>Full shares only</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Manual Trading</h5>
+            </div>
+            <div class="card-body">
+                <p class="small">For manual trading operations, use the command line tools:</p>
+                <code class="small">python trading_script.py</code>
+                <br><br>
+                <code class="small">python simple_automation.py --dry-run</code>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Automation Log</h5>
+            </div>
+            <div class="card-body">
+                <div id="automationLog" class="bg-dark text-light p-3 rounded" style="height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.9em;">
+                    <div class="text-muted">Automation log will appear here...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('runAutomation').addEventListener('click', function() {
+    const apiKey = document.getElementById('apiKey').value;
+    const model = document.getElementById('model').value;
+    const dryRun = document.getElementById('dryRun').checked;
+    const logDiv = document.getElementById('automationLog');
+    
+    if (!apiKey) {
+        alert('Please enter an OpenAI API key');
+        return;
+    }
+    
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Running...';
+    
+    logDiv.innerHTML = '<div class="text-info">Starting automated trading...</div>';
+    
+    fetch('/api/run-automation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            api_key: apiKey,
+            model: model,
+            dry_run: dryRun
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        logDiv.innerHTML += `<div class="text-${data.status === 'success' ? 'success' : 'danger'}">${data.message}</div>`;
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-play me-2"></i>Run Automated Trading';
+    })
+    .catch(error => {
+        logDiv.innerHTML += `<div class="text-danger">Error: ${error}</div>`;
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-play me-2"></i>Run Automated Trading';
+    });
+});
+
+document.getElementById('testConnection').addEventListener('click', function() {
+    const apiKey = document.getElementById('apiKey').value;
+    const logDiv = document.getElementById('automationLog');
+    
+    if (!apiKey) {
+        alert('Please enter an OpenAI API key');
+        return;
+    }
+    
+    logDiv.innerHTML = '<div class="text-info">Testing API connection...</div>';
+    logDiv.innerHTML += '<div class="text-warning">Feature coming soon - use command line for now</div>';
+});
+</script>
+{% endblock %}

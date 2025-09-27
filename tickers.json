@@ -1,0 +1,4 @@
+{
+  "universe": ["VWRP.L","VWRL.L","VUAG.L","CSP1.L","CNDX.L","IUKD.L","SGLN.L","IGLS.L"],
+  "benchmarks": ["VWRP.L"]
+}

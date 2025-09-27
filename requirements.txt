@@ -1,0 +1,12 @@
+numpy==2.3.2
+pandas==2.2.2
+yfinance==0.2.65
+matplotlib==3.8.4
+flask
+flask-cors
+matplotlib==3.8.4
+numpy==2.3.2
+openai
+pandas==2.2.2
+pandas-datareader
+yfinance==0.2.65
