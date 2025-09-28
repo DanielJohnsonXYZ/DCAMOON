@@ -35,11 +35,12 @@ class SecurityManager:
         
         # Generate new key
         key = Fernet.generate_key().decode()
-        logger.warning(
-            "No master key found in environment. Generated new key. "
-            "Set DCAMOON_MASTER_KEY environment variable to: %s", 
-            key
+        logger.critical(
+            "SECURITY: No master key found in environment. "
+            "A new encryption key has been generated but will be lost on restart. "
+            "Set DCAMOON_MASTER_KEY environment variable with a secure key for production use."
         )
+        # Note: Key is NOT logged for security reasons
         return key
     
     def _create_cipher(self, key: str) -> Fernet:
@@ -50,7 +51,9 @@ class SecurityManager:
         except Exception:
             # Derive key from password using PBKDF2
             password = key.encode()
-            salt = b'dcamoon_salt'  # In production, use random salt
+            # Use environment salt or fall back to static (for backward compatibility)
+            env_salt = os.getenv('DCAMOON_SALT', 'dcamoon_salt')
+            salt = env_salt.encode()
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,

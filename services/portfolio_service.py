@@ -141,6 +141,13 @@ class PortfolioService:
         try:
             ticker = ticker.upper()
             trade_type = trade_type.upper()
+            
+            # Critical security validation: prevent negative/zero values
+            if shares <= 0:
+                raise ValueError(f"Invalid shares: {shares}. Shares must be positive.")
+            if price <= 0:
+                raise ValueError(f"Invalid price: {price}. Price must be positive.")
+            
             total_amount = shares * price
             
             with db_session_scope() as session:
@@ -356,7 +363,12 @@ class PortfolioService:
                 
                 daily_return = 0.0
                 if previous_snapshot:
-                    daily_return = ((total_equity - previous_snapshot.total_equity) / previous_snapshot.total_equity) * 100
+                    # Prevent zero division error
+                    if previous_snapshot.total_equity > 0:
+                        daily_return = ((total_equity - previous_snapshot.total_equity) / previous_snapshot.total_equity) * 100
+                    else:
+                        # If previous equity was zero, treat any positive change as 100% gain
+                        daily_return = 100.0 if total_equity > 0 else 0.0
                 
                 # Create snapshot
                 snapshot = PortfolioSnapshot(

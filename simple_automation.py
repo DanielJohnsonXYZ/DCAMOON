@@ -18,6 +18,7 @@ from typing import Dict, List, Any, Optional
 import pandas as pd
 
 # Import existing trading functions
+from services.portfolio_service import PortfolioService
 from trading_script import (
     process_portfolio, daily_results, load_latest_portfolio_state,
     set_data_dir, PORTFOLIO_CSV, TRADE_LOG_CSV, last_trading_date
@@ -174,8 +175,20 @@ def validate_trade(trade: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def execute_automated_trades(trades: List[Dict[str, Any]], portfolio_df: pd.DataFrame, cash: float) -> tuple[pd.DataFrame, float]:
-    """Execute trades recommended by LLM with improved validation and error handling"""
+def execute_automated_trades(trades: List[Dict[str, Any]], portfolio_df: pd.DataFrame, cash: float, 
+                           portfolio_service: Optional[PortfolioService] = None, 
+                           portfolio_id: Optional[str] = None,
+                           execute_real_trades: bool = False) -> tuple[pd.DataFrame, float]:
+    """Execute trades recommended by LLM with improved validation and error handling
+    
+    Args:
+        trades: List of trade recommendations
+        portfolio_df: Portfolio DataFrame (for compatibility)
+        cash: Available cash (for compatibility)
+        portfolio_service: Portfolio service for real trade execution
+        portfolio_id: Portfolio ID for real trades
+        execute_real_trades: Whether to execute real trades or just simulate
+    """
     
     logger.info(f"Executing {len(trades)} LLM-recommended trades")
     executed_trades = 0
@@ -200,10 +213,34 @@ def execute_automated_trades(trades: List[Dict[str, Any]], portfolio_df: pd.Data
                 
                 if cost <= cash:
                     logger.info(f"BUY: {shares} shares of {ticker} at ${price:.2f} (stop: ${stop_loss:.2f}) - {reason}")
-                    # TODO: Replace with actual buy function from trading_script
-                    cash -= cost
-                    executed_trades += 1
-                    logger.info(f"Trade executed - Cash reduced by ${cost:.2f}, new balance: ${cash:.2f}")
+                    
+                    if execute_real_trades and portfolio_service and portfolio_id:
+                        try:
+                            # Execute real trade through portfolio service
+                            trade_result = portfolio_service.execute_trade(
+                                portfolio_id=portfolio_id,
+                                ticker=ticker,
+                                trade_type='BUY',
+                                shares=shares,
+                                price=price,
+                                reason=f"Automation: {reason}"
+                            )
+                            logger.info(f"✅ REAL TRADE EXECUTED: {trade_result.id}")
+                            executed_trades += 1
+                            
+                            # Set stop loss if specified
+                            if stop_loss > 0:
+                                portfolio_service.update_stop_loss(portfolio_id, ticker, stop_loss)
+                                logger.info(f"Stop loss set at ${stop_loss:.2f}")
+                                
+                        except Exception as e:
+                            logger.error(f"❌ REAL TRADE FAILED: {e}")
+                            continue
+                    else:
+                        # Simulation mode
+                        cash -= cost
+                        executed_trades += 1
+                        logger.info(f"💻 SIMULATION: Cash reduced by ${cost:.2f}, new balance: ${cash:.2f}")
                 else:
                     logger.warning(f"BUY REJECTED: {ticker} - Insufficient cash (need ${cost:.2f}, have ${cash:.2f})")
             
@@ -212,10 +249,29 @@ def execute_automated_trades(trades: List[Dict[str, Any]], portfolio_df: pd.Data
                 price = float(trade.get('price', 0))
                 proceeds = shares * price
                 logger.info(f"SELL: {shares} shares of {ticker} at ${price:.2f} - {reason}")
-                # TODO: Replace with actual sell function from trading_script
-                cash += proceeds
-                executed_trades += 1
-                logger.info(f"Trade executed - Cash increased by ${proceeds:.2f}, new balance: ${cash:.2f}")
+                
+                if execute_real_trades and portfolio_service and portfolio_id:
+                    try:
+                        # Execute real trade through portfolio service
+                        trade_result = portfolio_service.execute_trade(
+                            portfolio_id=portfolio_id,
+                            ticker=ticker,
+                            trade_type='SELL',
+                            shares=shares,
+                            price=price,
+                            reason=f"Automation: {reason}"
+                        )
+                        logger.info(f"✅ REAL TRADE EXECUTED: {trade_result.id}")
+                        executed_trades += 1
+                        
+                    except Exception as e:
+                        logger.error(f"❌ REAL TRADE FAILED: {e}")
+                        continue
+                else:
+                    # Simulation mode
+                    cash += proceeds
+                    executed_trades += 1
+                    logger.info(f"💻 SIMULATION: Cash increased by ${proceeds:.2f}, new balance: ${cash:.2f}")
             
             elif action == 'hold':
                 logger.info(f"HOLD: {ticker} - {reason}")
@@ -228,7 +284,8 @@ def execute_automated_trades(trades: List[Dict[str, Any]], portfolio_df: pd.Data
     return portfolio_df, cash
 
 
-def run_automated_trading(api_key: str, model: str = "gpt-4", data_dir: str = "Start Your Own", dry_run: bool = False):
+def run_automated_trading(api_key: str, model: str = "gpt-4", data_dir: str = "Start Your Own", 
+                         dry_run: bool = False, execute_real_trades: bool = False):
     """Run the automated trading process with comprehensive error handling"""
     
     logger.info("Starting automated trading system")
@@ -245,6 +302,21 @@ def run_automated_trading(api_key: str, model: str = "gpt-4", data_dir: str = "S
             data_path.mkdir(parents=True, exist_ok=True)
         
         set_data_dir(data_path)
+        
+        # Initialize portfolio service for real trades
+        portfolio_service = None
+        portfolio_id = None
+        if execute_real_trades:
+            from database.database import initialize_database
+            try:
+                # Initialize database and portfolio service
+                initialize_database()
+                portfolio_service = PortfolioService()
+                portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'  # Default portfolio ID
+                logger.info("Portfolio service initialized for real trade execution")
+            except Exception as e:
+                logger.error(f"Failed to initialize portfolio service: {e}")
+                raise ValueError(f"Cannot execute real trades: {e}")
         
         # Load current portfolio
         portfolio_file = data_path / "chatgpt_portfolio_update.csv"
@@ -320,7 +392,12 @@ def run_automated_trading(api_key: str, model: str = "gpt-4", data_dir: str = "S
         
         # Execute trades
         if trades and not dry_run:
-            portfolio_df, cash = execute_automated_trades(trades, portfolio_df, cash)
+            portfolio_df, cash = execute_automated_trades(
+                trades, portfolio_df, cash,
+                portfolio_service=portfolio_service,
+                portfolio_id=portfolio_id,
+                execute_real_trades=execute_real_trades
+            )
         elif trades and dry_run:
             logger.info(f"DRY RUN - Would execute {len(trades)} trades")
             print(f"\n=== DRY RUN - Would execute {len(trades)} trades ===")

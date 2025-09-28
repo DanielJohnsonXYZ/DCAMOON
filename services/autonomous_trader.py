@@ -262,7 +262,12 @@ class AutonomousTrader:
             if signal.action == 'BUY':
                 # Calculate position size
                 position_value = self.calculate_position_size(signal, available_cash)
-                shares = position_value / research.current_price
+                shares_raw = position_value / research.current_price
+                
+                # Round to avoid fractional shares (most brokers require whole shares)
+                shares = round(shares_raw, 3)  # Allow up to 3 decimal places for fractional shares
+                if shares < 0.001:  # Minimum viable position
+                    return None
                 
                 # Execute buy order
                 trade = self.portfolio_service.execute_trade(
