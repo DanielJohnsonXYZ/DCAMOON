@@ -1,0 +1,63 @@
+2025-09-28 02:48:08,953 - __main__ - INFO - Starting DCAMOON migration
+2025-09-28 02:48:08,953 - __main__ - INFO - Portfolio CSV: Scripts and CSV Files/chatgpt_portfolio_update.csv
+2025-09-28 02:48:08,953 - __main__ - INFO - Trade log CSV: Scripts and CSV Files/chatgpt_trade_log.csv
+2025-09-28 02:48:08,953 - __main__ - INFO - Dry run: True
+2025-09-28 02:48:08,964 - database.database - INFO - Database engine created for: sqlite:///dcamoon.db
+2025-09-28 02:48:08,982 - database.database - INFO - Database tables created successfully
+2025-09-28 02:48:08,982 - database.database - ERROR - Database session error: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')
+2025-09-28 02:48:08,982 - database.database - ERROR - Database health check failed: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')
+2025-09-28 02:48:08,982 - __main__ - ERROR - Migration failed with error: Failed to establish database connection
+2025-09-28 02:48:31,229 - __main__ - INFO - Starting DCAMOON migration
+2025-09-28 02:48:31,229 - __main__ - INFO - Portfolio CSV: Scripts and CSV Files/chatgpt_portfolio_update.csv
+2025-09-28 02:48:31,229 - __main__ - INFO - Trade log CSV: Scripts and CSV Files/chatgpt_trade_log.csv
+2025-09-28 02:48:31,229 - __main__ - INFO - Dry run: True
+2025-09-28 02:48:31,235 - database.database - INFO - Database engine created for: sqlite:///dcamoon.db
+2025-09-28 02:48:31,238 - database.database - INFO - Database tables created successfully
+2025-09-28 02:48:31,238 - database.database - INFO - Database initialized successfully
+2025-09-28 02:48:31,238 - __main__ - INFO - Database initialized: {'type': 'SQLite', 'version': '3.51.0', 'url': 'sqlite:///dcamoon.db', 'healthy': True}
+2025-09-28 02:48:31,238 - __main__ - INFO - Starting migration
+2025-09-28 02:48:31,238 - database.migrations - INFO - Starting CSV to database migration
+2025-09-28 02:48:31,244 - database.migrations - INFO - Loaded portfolio CSV: 3 rows
+2025-09-28 02:48:31,245 - database.migrations - INFO - Loaded trade log CSV: 0 trades
+2025-09-28 02:48:31,249 - database.migrations - INFO - DRY RUN - Migration would create:
+2025-09-28 02:48:31,249 - database.migrations - INFO -   Portfolio: DCAMOON Portfolio
+2025-09-28 02:48:31,249 - database.migrations - INFO -   Positions: 0
+2025-09-28 02:48:31,249 - database.migrations - INFO -   Trades: 0
+2025-09-28 02:48:31,249 - database.migrations - INFO -   Snapshots: 1
+2025-09-28 02:48:31,249 - __main__ - INFO - Migration completed successfully
+2025-09-28 02:48:31,249 - __main__ - INFO - Dry run completed - no data was saved
+2025-09-28 02:48:31,249 - __main__ - INFO - Would create:
+2025-09-28 02:48:31,249 - __main__ - INFO -   - Positions: 0
+2025-09-28 02:48:31,249 - __main__ - INFO -   - Trades: 0
+2025-09-28 02:48:31,249 - __main__ - INFO -   - Snapshots: 1
+2025-09-28 02:48:31,249 - __main__ - INFO - Migration process completed
+2025-09-28 02:48:37,378 - __main__ - INFO - Starting DCAMOON migration
+2025-09-28 02:48:37,378 - __main__ - INFO - Portfolio CSV: Scripts and CSV Files/chatgpt_portfolio_update.csv
+2025-09-28 02:48:37,378 - __main__ - INFO - Trade log CSV: Scripts and CSV Files/chatgpt_trade_log.csv
+2025-09-28 02:48:37,378 - __main__ - INFO - Dry run: False
+2025-09-28 02:48:37,383 - database.database - INFO - Database engine created for: sqlite:///dcamoon.db
+2025-09-28 02:48:37,385 - database.database - INFO - Database tables created successfully
+2025-09-28 02:48:37,386 - database.database - INFO - Database initialized successfully
+2025-09-28 02:48:37,386 - __main__ - INFO - Database initialized: {'type': 'SQLite', 'version': '3.51.0', 'url': 'sqlite:///dcamoon.db', 'healthy': True}
+2025-09-28 02:48:37,386 - __main__ - INFO - Creating backups of CSV files
+2025-09-28 02:48:37,386 - database.migrations - INFO - Portfolio CSV backed up to: backups/portfolio_backup_20250928_024837.csv
+2025-09-28 02:48:37,386 - database.migrations - INFO - Trade log CSV backed up to: backups/trade_log_backup_20250928_024837.csv
+2025-09-28 02:48:37,386 - __main__ - INFO - Backups created: {'portfolio': 'backups/portfolio_backup_20250928_024837.csv', 'trade_log': 'backups/trade_log_backup_20250928_024837.csv'}
+2025-09-28 02:48:37,386 - __main__ - INFO - Starting migration
+2025-09-28 02:48:37,386 - database.migrations - INFO - Starting CSV to database migration
+2025-09-28 02:48:37,389 - database.migrations - INFO - Loaded portfolio CSV: 3 rows
+2025-09-28 02:48:37,389 - database.migrations - INFO - Loaded trade log CSV: 0 trades
+2025-09-28 02:48:37,397 - database.migrations - INFO - Migration completed successfully
+2025-09-28 02:48:37,397 - database.migrations - INFO - Created portfolio: c49d9e6f-a4c2-4524-81d1-96a8e5672d52
+2025-09-28 02:48:37,397 - database.migrations - INFO - Created 0 positions
+2025-09-28 02:48:37,397 - database.migrations - INFO - Created 0 trades
+2025-09-28 02:48:37,397 - database.migrations - INFO - Created 1 snapshots
+2025-09-28 02:48:37,398 - __main__ - INFO - Migration completed successfully
+2025-09-28 02:48:37,398 - __main__ - INFO - Created portfolio ID: c49d9e6f-a4c2-4524-81d1-96a8e5672d52
+2025-09-28 02:48:37,398 - __main__ - INFO - Positions created: 0
+2025-09-28 02:48:37,398 - __main__ - INFO - Trades created: 0
+2025-09-28 02:48:37,398 - __main__ - INFO - Snapshots created: 1
+2025-09-28 02:48:37,398 - __main__ - INFO - Validating migration
+2025-09-28 02:48:37,401 - database.migrations - ERROR - Error validating migration: Instance <PortfolioSnapshot at 0x10dc7d640> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+2025-09-28 02:48:37,401 - __main__ - ERROR - Migration validation FAILED
+2025-09-28 02:48:37,401 - __main__ - ERROR - Validation error: Instance <PortfolioSnapshot at 0x10dc7d640> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)

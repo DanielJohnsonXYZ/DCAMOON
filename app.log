@@ -1,0 +1,205 @@
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+ * Serving Flask app 'simple_app'
+ * Debug mode: on
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5004
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:08:10] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:08:11] "GET /api/trades HTTP/1.1" 200 -
+ERROR:__main__:Error in /api/portfolio: Instance <Position at 0x11385d6d0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:08:11] "[35m[1mGET /api/portfolio HTTP/1.1[0m" 500 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:08:12] "[33mGET /api/chart HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:08:12] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:08:12] "GET / HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+ERROR:__main__:Error in /api/portfolio: Instance <Position at 0x10fa7adf0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:09:11] "[35m[1mGET /api/portfolio HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:09:40] "GET /api/portfolio HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:02] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:03] "GET /api/portfolio HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:03] "GET /api/trades HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:03] "[33mGET /api/chart HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:13] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:13] "GET /api/portfolio HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:13] "GET /api/trades HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:13] "[33mGET /api/chart HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:13] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 03:10:40] "GET /api/chart HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+/Users/danieljohnson/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+/Users/danieljohnson/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+/Users/danieljohnson/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+/Users/danieljohnson/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+ERROR:__main__:Error getting trading signals: name 'db_session_scope' is not defined
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:18:08] "[35m[1mGET /api/research/signals HTTP/1.1[0m" 500 -
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+/Users/danieljohnson/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:21:36] "GET /api/research/signals HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:23:30] "GET /api/research/analyze/TSLA HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:26:55] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:26:56] "GET /api/trades HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:26:56] "GET /api/portfolio HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:26:58] "GET /api/chart HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:27:10] "GET /api/research/opportunities HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:27:22] "GET /api/research/signals HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+/Users/danieljohnson/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+/Users/danieljohnson/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:__main__:Initializing database and services...
+INFO:database.database:Database engine created for: sqlite:///dcamoon.db
+INFO:database.database:Database tables created successfully
+INFO:database.database:Database initialized successfully
+INFO:__main__:Services initialized successfully
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 131-437-761
+INFO:werkzeug:127.0.0.1 - - [28/Sep/2025 10:52:41] "GET /api/chart HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py', reloading
+DCAMOON Trading Dashboard - Simple Version
+Starting Flask server on http://localhost:5004
+INFO:werkzeug: * Restarting with stat
+  File "/Users/danieljohnson/Desktop/MVPs/New/DCAMOON/simple_app.py", line 504
+    \"\"\"Start autonomous trading\"\"\"
+                                       ^
+SyntaxError: unexpected character after line continuation character

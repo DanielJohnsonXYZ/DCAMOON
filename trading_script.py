@@ -28,6 +28,7 @@ import pandas as pd
 import yfinance as yf
 import json
 import logging
+import sys
 
 # Optional pandas-datareader import for Stooq access
 try:
@@ -70,6 +71,18 @@ DEFAULT_BENCHMARKS = ["IWO", "XBI", "SPY", "IWM"]
 
 # Set up logger for this module
 logger = logging.getLogger(__name__)
+
+# Global args storage for non-interactive mode
+_global_args = None
+
+def _get_args():
+    """Get global command line arguments"""
+    return _global_args
+
+def _set_args(args):
+    """Set global command line arguments"""
+    global _global_args
+    _global_args = args
 
 # Log initial global state configuration (only when run as main script)
 def _log_initial_state():
@@ -439,6 +452,15 @@ def process_portfolio(
     cash: float,
     interactive: bool = True,
 ) -> tuple[pd.DataFrame, float]:
+    """Process portfolio with automatic non-interactive mode detection"""
+    # Auto-detect non-interactive mode
+    args = _get_args()
+    if args and hasattr(args, 'non_interactive') and args.non_interactive:
+        interactive = False
+        logger.info("Running in non-interactive mode (--non-interactive flag)")
+    elif not sys.stdin.isatty():
+        interactive = False
+        logger.info("Running in non-interactive mode (not a TTY)")
     today_iso = last_trading_date().date().isoformat()
     portfolio_df = _ensure_df(portfolio)
 
@@ -448,6 +470,7 @@ def process_portfolio(
 
     # ------- Interactive trade entry (supports MOO) -------
     if interactive:
+        logger.info("Running in interactive mode - prompting for manual trades")
         while True:
             print(portfolio_df)
             action = input(
@@ -578,6 +601,8 @@ Would you like to log a manual trade? Enter 'b' for buy, 's' for sell, or press 
                 continue
 
             break  # proceed to pricing
+    else:
+        logger.info("Skipping interactive trade entry (non-interactive mode)")
 
     # ------- Daily pricing + stop-loss execution -------
     s, e = trading_day_window()
@@ -1080,10 +1105,29 @@ def daily_results(chatgpt_portfolio: pd.DataFrame, cash: float) -> None:
     if not spx_norm.empty:
         initial_price = float(spx_norm["Close"].iloc[0])
         price_now = float(spx_norm["Close"].iloc[-1])
-        try:
-            starting_equity = float(input("what was your starting equity? "))
-        except Exception:
-            print("Invalid input for starting equity. Defaulting to NaN.")
+        starting_equity = np.nan  # Default to NaN if not provided
+        
+        # Check if we're in non-interactive mode or have starting equity from args
+        if hasattr(_get_args(), 'starting_equity') and _get_args().starting_equity is not None:
+            starting_equity = _get_args().starting_equity
+        elif hasattr(_get_args(), 'non_interactive') and _get_args().non_interactive:
+            # Non-interactive mode - skip the prompt
+            logger.info("Running in non-interactive mode - skipping starting equity prompt")
+            starting_equity = np.nan
+        elif not sys.stdin.isatty():
+            # Not a TTY (running in automation/script) - skip the prompt
+            logger.info("Not running in a terminal - skipping starting equity prompt")
+            starting_equity = np.nan
+        else:
+            # Interactive mode - prompt for starting equity
+            try:
+                starting_equity = float(input("what was your starting equity? "))
+            except (EOFError, KeyboardInterrupt):
+                logger.info("User cancelled starting equity input")
+                starting_equity = np.nan
+            except Exception as e:
+                logger.warning(f"Invalid input for starting equity: {e}. Using NaN.")
+                starting_equity = np.nan
         spx_value = (starting_equity / initial_price) * price_now if not np.isnan(starting_equity) else np.nan
 
     # -------- Pretty Printing --------
@@ -1227,6 +1271,10 @@ if __name__ == "__main__":
     parser.add_argument("--log-level", default="INFO", 
                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
                        help="Set the logging level (default: INFO)")
+    parser.add_argument("--starting-equity", type=float, default=None,
+                       help="Starting equity for S&P 500 comparison (avoids interactive prompt)")
+    parser.add_argument("--non-interactive", action="store_true",
+                       help="Run in non-interactive mode (no prompts, suitable for automation)")
     args = parser.parse_args()
 
     
@@ -1236,6 +1284,9 @@ if __name__ == "__main__":
         format='🔥 %(asctime)s - %(filename)s:%(lineno)d - %(levelname)s - %(message)s'
     )
 
+    # Store args globally for access in functions
+    _set_args(args)
+    
     # Log initial global state and command-line arguments
     _log_initial_state()
     logger.info("Script started with arguments: %s", vars(args))

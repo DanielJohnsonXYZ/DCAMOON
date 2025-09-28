@@ -1,12 +1,28 @@
-numpy==2.3.2
-pandas==2.2.2
-yfinance==0.2.65
-matplotlib==3.8.4
-flask
-flask-cors
-matplotlib==3.8.4
-numpy==2.3.2
-openai
-pandas==2.2.2
-pandas-datareader
-yfinance==0.2.65
+# Core web framework
+flask>=3.0.0,<4.0.0
+flask-cors>=4.0.0,<5.0.0
+
+# Database
+sqlalchemy>=2.0.0,<3.0.0
+
+# Security
+cryptography>=41.0.0,<42.0.0
+
+# Testing
+pytest>=7.4.0,<8.0.0
+pytest-asyncio>=0.21.0,<1.0.0
+
+# Data analysis and visualization
+matplotlib>=3.8.0,<3.9.0
+numpy>=2.3.0,<3.0.0
+pandas>=2.2.0,<3.0.0
+
+# Financial data and APIs
+openai>=1.50.0,<2.0.0
+pandas-datareader>=0.10.0,<1.0.0
+requests>=2.31.0,<3.0.0
+yfinance>=0.2.60,<0.3.0
+
+# Production server
+gunicorn>=21.2.0,<22.0.0
+python-dotenv>=1.0.0,<2.0.0

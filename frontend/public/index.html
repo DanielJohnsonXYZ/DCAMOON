@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCAMOON Trading Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-container {
+            grid-column: 1 / -1;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .trade-form {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .trades-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .trades-table th,
+        .trades-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .trades-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .positions-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .position-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #efe;
+            color: #363;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // API service
+        const api = axios.create({
+            baseURL: 'http://localhost:5004'
+        });
+
+        // Main App Component
+        function App() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [portfolio, setPortfolio] = useState(null);
+            const [trades, setTrades] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+
+            useEffect(() => {
+                loadData();
+            }, []);
+
+            const loadData = async () => {
+                try {
+                    setLoading(true);
+                    setError(null);
+                    
+                    const [portfolioRes, tradesRes] = await Promise.all([
+                        api.get('/api/portfolio'),
+                        api.get('/api/trades')
+                    ]);
+                    
+                    setPortfolio(portfolioRes.data);
+                    setTrades(tradesRes.data.trades || []);
+                } catch (err) {
+                    setError('Failed to load data: ' + (err.response?.data?.message || err.message));
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="container">
+                        <div className="loading">
+                            <i className="fas fa-spinner fa-spin fa-2x"></i>
+                            <p>Loading DCAMOON Dashboard...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1><i className="fas fa-chart-line"></i> DCAMOON Trading Dashboard</h1>
+                        <p>Advanced Portfolio Management & Trading System</p>
+                    </div>
+
+                    {error && <div className="error">{error}</div>}
+
+                    <div className="nav-tabs">
+                        <button 
+                            className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('dashboard')}
+                        >
+                            <i className="fas fa-chart-pie"></i> Dashboard
+                        </button>
+                        <button 
+                            className={`nav-tab ${activeTab === 'trading' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('trading')}
+                        >
+                            <i className="fas fa-exchange-alt"></i> Trading
+                        </button>
+                        <button 
+                            className={`nav-tab ${activeTab === 'positions' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('positions')}
+                        >
+                            <i className="fas fa-briefcase"></i> Positions
+                        </button>
+                        <button 
+                            className={`nav-tab ${activeTab === 'history' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('history')}
+                        >
+                            <i className="fas fa-history"></i> History
+                        </button>
+                        <button 
+                            className={`nav-tab ${activeTab === 'research' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('research')}
+                        >
+                            <i className="fas fa-search"></i> Research
+                        </button>
+                        <button 
+                            className={`nav-tab ${activeTab === 'autonomous' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('autonomous')}
+                        >
+                            <i className="fas fa-robot"></i> AI Autopilot
+                        </button>
+                    </div>
+
+                    {activeTab === 'dashboard' && <Dashboard portfolio={portfolio} />}
+                    {activeTab === 'trading' && <Trading onTradeExecuted={loadData} />}
+                    {activeTab === 'positions' && <Positions portfolio={portfolio} />}
+                    {activeTab === 'history' && <History trades={trades} />}
+                    {activeTab === 'research' && <ResearchHub />}
+                    {activeTab === 'autonomous' && <AutonomousTrading />}
+                </div>
+            );
+        }
+
+        // Dashboard Component
+        function Dashboard({ portfolio }) {
+            const [chartData, setChartData] = useState(null);
+
+            useEffect(() => {
+                loadChart();
+            }, []);
+
+            const loadChart = async () => {
+                try {
+                    const res = await api.get('/api/chart');
+                    setChartData(res.data.chart);
+                } catch (err) {
+                    console.error('Failed to load chart:', err);
+                }
+            };
+
+            if (!portfolio?.portfolio) {
+                return <div className="loading">Loading dashboard...</div>;
+            }
+
+            const stats = portfolio.portfolio;
+
+            return (
+                <>
+                    <div className="dashboard-grid">
+                        <div className="card">
+                            <h3><i className="fas fa-wallet"></i> Total Equity</h3>
+                            <div className="stat-value">£{stats.total_equity?.toFixed(2) || '0.00'}</div>
+                            <div className="stat-label">Portfolio Value</div>
+                        </div>
+
+                        <div className="card">
+                            <h3><i className="fas fa-money-bill"></i> Cash Balance</h3>
+                            <div className="stat-value">£{stats.current_cash?.toFixed(2) || '0.00'}</div>
+                            <div className="stat-label">Available Cash</div>
+                        </div>
+
+                        <div className="card">
+                            <h3><i className="fas fa-chart-line"></i> Total Return</h3>
+                            <div className="stat-value" style={{color: stats.total_return >= 0 ? '#28a745' : '#dc3545'}}>
+                                {stats.total_return_pct?.toFixed(2) || '0.00'}%
+                            </div>
+                            <div className="stat-label">Since Inception</div>
+                        </div>
+
+                        <div className="card">
+                            <h3><i className="fas fa-exchange-alt"></i> Total Trades</h3>
+                            <div className="stat-value">{stats.trade_count || 0}</div>
+                            <div className="stat-label">Executed Trades</div>
+                        </div>
+                    </div>
+
+                    <div className="chart-container">
+                        <h3><i className="fas fa-chart-area"></i> Portfolio Performance</h3>
+                        {chartData ? (
+                            <img 
+                                src={`data:image/png;base64,${chartData}`} 
+                                alt="Portfolio Performance Chart"
+                                style={{width: '100%', height: '300px', objectFit: 'contain'}}
+                            />
+                        ) : (
+                            <div className="loading">Loading chart...</div>
+                        )}
+                    </div>
+                </>
+            );
+        }
+
+        // Trading Component
+        function Trading({ onTradeExecuted }) {
+            const [formData, setFormData] = useState({
+                ticker: '',
+                trade_type: 'BUY',
+                shares: '',
+                price: '',
+                reason: ''
+            });
+            const [loading, setLoading] = useState(false);
+            const [message, setMessage] = useState(null);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setMessage(null);
+
+                try {
+                    const response = await api.post('/api/execute-trade', formData);
+                    setMessage({ type: 'success', text: response.data.message });
+                    setFormData({
+                        ticker: '',
+                        trade_type: 'BUY',
+                        shares: '',
+                        price: '',
+                        reason: ''
+                    });
+                    if (onTradeExecuted) onTradeExecuted();
+                } catch (err) {
+                    setMessage({ 
+                        type: 'error', 
+                        text: 'Trade failed: ' + (err.response?.data?.message || err.message)
+                    });
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="trade-form">
+                    <h3><i className="fas fa-exchange-alt"></i> Execute Trade</h3>
+                    
+                    {message && (
+                        <div className={message.type === 'error' ? 'error' : 'success'}>
+                            {message.text}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label>Stock Ticker</label>
+                            <input
+                                type="text"
+                                value={formData.ticker}
+                                onChange={(e) => setFormData({...formData, ticker: e.target.value.toUpperCase()})}
+                                placeholder="e.g., VWRP.L"
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Action</label>
+                            <select
+                                value={formData.trade_type}
+                                onChange={(e) => setFormData({...formData, trade_type: e.target.value})}
+                            >
+                                <option value="BUY">Buy</option>
+                                <option value="SELL">Sell</option>
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Shares</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formData.shares}
+                                onChange={(e) => setFormData({...formData, shares: e.target.value})}
+                                placeholder="Number of shares"
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Price per Share (£)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formData.price}
+                                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                                placeholder="Price per share"
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Reason (Optional)</label>
+                            <input
+                                type="text"
+                                value={formData.reason}
+                                onChange={(e) => setFormData({...formData, reason: e.target.value})}
+                                placeholder="Investment reason"
+                            />
+                        </div>
+
+                        <button type="submit" className="btn btn-primary" disabled={loading}>
+                            {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-check"></i>}
+                            {loading ? ' Executing...' : ' Execute Trade'}
+                        </button>
+                    </form>
+                </div>
+            );
+        }
+
+        // Positions Component
+        function Positions({ portfolio }) {
+            if (!portfolio?.positions) {
+                return <div className="loading">Loading positions...</div>;
+            }
+
+            if (portfolio.positions.length === 0) {
+                return (
+                    <div className="card">
+                        <h3><i className="fas fa-briefcase"></i> Current Positions</h3>
+                        <p>No active positions. Start trading to build your portfolio!</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="card">
+                    <h3><i className="fas fa-briefcase"></i> Current Positions</h3>
+                    <div className="positions-grid">
+                        {portfolio.positions.map((position, index) => (
+                            <div key={index} className="position-card">
+                                <h4>{position.ticker}</h4>
+                                <p><strong>Shares:</strong> {position.shares}</p>
+                                <p><strong>Avg Cost:</strong> £{position.average_cost?.toFixed(2)}</p>
+                                <p><strong>Value:</strong> £{position.current_value?.toFixed(2)}</p>
+                                {position.stop_loss && (
+                                    <p><strong>Stop Loss:</strong> £{position.stop_loss.toFixed(2)}</p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // History Component
+        function History({ trades }) {
+            if (trades.length === 0) {
+                return (
+                    <div className="card">
+                        <h3><i className="fas fa-history"></i> Trade History</h3>
+                        <p>No trades executed yet. Use the Trading tab to start investing!</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="card">
+                    <h3><i className="fas fa-history"></i> Trade History</h3>
+                    <table className="trades-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Ticker</th>
+                                <th>Action</th>
+                                <th>Shares</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {trades.map((trade, index) => (
+                                <tr key={index}>
+                                    <td>{new Date(trade.date).toLocaleDateString()}</td>
+                                    <td>{trade.ticker}</td>
+                                    <td style={{color: trade.action === 'BUY' ? '#28a745' : '#dc3545'}}>
+                                        {trade.action}
+                                    </td>
+                                    <td>{trade.shares}</td>
+                                    <td>£{trade.price?.toFixed(2)}</td>
+                                    <td>£{trade.total_amount?.toFixed(2)}</td>
+                                    <td>{trade.reason || '-'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            );
+        }
+
+        // Research Hub Component
+        function ResearchHub() {
+            const [activeSection, setActiveSection] = useState('opportunities');
+            const [opportunities, setOpportunities] = useState([]);
+            const [signals, setSignals] = useState([]);
+            const [analysis, setAnalysis] = useState(null);
+            const [loading, setLoading] = useState({});
+            const [searchTicker, setSearchTicker] = useState('');
+
+            const loadOpportunities = async () => {
+                setLoading({...loading, opportunities: true});
+                try {
+                    const response = await api.get('/api/research/opportunities');
+                    setOpportunities(response.data.opportunities || []);
+                } catch (err) {
+                    console.error('Error loading opportunities:', err);
+                } finally {
+                    setLoading({...loading, opportunities: false});
+                }
+            };
+
+            const loadSignals = async () => {
+                setLoading({...loading, signals: true});
+                try {
+                    const response = await api.get('/api/research/signals');
+                    setSignals(response.data.signals || []);
+                } catch (err) {
+                    console.error('Error loading signals:', err);
+                } finally {
+                    setLoading({...loading, signals: false});
+                }
+            };
+
+            const analyzeStock = async (ticker) => {
+                setLoading({...loading, analysis: true});
+                try {
+                    const response = await api.get(`/api/research/analyze/${ticker}`);
+                    setAnalysis(response.data.research);
+                } catch (err) {
+                    console.error('Error analyzing stock:', err);
+                } finally {
+                    setLoading({...loading, analysis: false});
+                }
+            };
+
+            const handleSearch = () => {
+                if (searchTicker.trim()) {
+                    analyzeStock(searchTicker.trim().toUpperCase());
+                    setActiveSection('analysis');
+                }
+            };
+
+            return (
+                <div style={{display: 'grid', gap: '20px'}}>
+                    {/* Research Navigation */}
+                    <div className="card">
+                        <div style={{display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap'}}>
+                            <button 
+                                className={`btn ${activeSection === 'opportunities' ? 'btn-primary' : ''}`}
+                                onClick={() => setActiveSection('opportunities')}
+                                style={{flex: 1, minWidth: '120px'}}
+                            >
+                                <i className="fas fa-bullseye"></i> Opportunities
+                            </button>
+                            <button 
+                                className={`btn ${activeSection === 'signals' ? 'btn-primary' : ''}`}
+                                onClick={() => setActiveSection('signals')}
+                                style={{flex: 1, minWidth: '120px'}}
+                            >
+                                <i className="fas fa-signal"></i> Signals
+                            </button>
+                            <button 
+                                className={`btn ${activeSection === 'analysis' ? 'btn-primary' : ''}`}
+                                onClick={() => setActiveSection('analysis')}
+                                style={{flex: 1, minWidth: '120px'}}
+                            >
+                                <i className="fas fa-chart-bar"></i> Analysis
+                            </button>
+                        </div>
+
+                        {/* Stock Search */}
+                        <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
+                            <input
+                                type="text"
+                                placeholder="Enter ticker (e.g., TSLA, AAPL, VWRP.L)"
+                                value={searchTicker}
+                                onChange={(e) => setSearchTicker(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                style={{flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ddd'}}
+                            />
+                            <button 
+                                className="btn btn-primary"
+                                onClick={handleSearch}
+                                disabled={!searchTicker.trim()}
+                            >
+                                <i className="fas fa-search"></i> Analyze
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Opportunities Section */}
+                    {activeSection === 'opportunities' && (
+                        <div className="card">
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                <h3><i className="fas fa-bullseye"></i> Proactive Trading Opportunities</h3>
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={loadOpportunities}
+                                    disabled={loading.opportunities}
+                                >
+                                    {loading.opportunities ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync"></i>}
+                                    {loading.opportunities ? ' Scanning...' : ' Scan Market'}
+                                </button>
+                            </div>
+
+                            {opportunities.length > 0 ? (
+                                <div style={{display: 'grid', gap: '15px'}}>
+                                    {opportunities.map((opp, index) => (
+                                        <div key={index} style={{
+                                            background: '#f8f9fa',
+                                            padding: '20px',
+                                            borderRadius: '10px',
+                                            border: '1px solid #e1e5e9'
+                                        }}>
+                                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px'}}>
+                                                <div>
+                                                    <h4 style={{margin: 0, color: '#333'}}>{opp.ticker}</h4>
+                                                    <p style={{margin: '5px 0', color: '#666'}}>£{opp.current_price?.toFixed(2)} ({opp.price_change_pct > 0 ? '+' : ''}{opp.price_change_pct?.toFixed(2)}%)</p>
+                                                </div>
+                                                <div style={{textAlign: 'right'}}>
+                                                    <span style={{
+                                                        background: opp.recommendation.action === 'BUY' ? '#28a745' : opp.recommendation.action === 'SELL' ? '#dc3545' : '#6c757d',
+                                                        color: 'white',
+                                                        padding: '5px 10px',
+                                                        borderRadius: '15px',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        {opp.recommendation.action}
+                                                    </span>
+                                                    <p style={{margin: '5px 0', fontSize: '0.9rem', color: '#666'}}>
+                                                        {(opp.recommendation.confidence * 100).toFixed(0)}% confidence
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p style={{margin: '10px 0', lineHeight: '1.5'}}>{opp.recommendation.reasoning}</p>
+                                            <div style={{display: 'flex', gap: '15px', fontSize: '0.9rem', color: '#666'}}>
+                                                <span><strong>Target:</strong> £{opp.recommendation.target_price?.toFixed(2) || 'N/A'}</span>
+                                                <span><strong>Stop Loss:</strong> £{opp.recommendation.stop_loss?.toFixed(2) || 'N/A'}</span>
+                                                <span><strong>Risk:</strong> {opp.recommendation.risk_level}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{textAlign: 'center', padding: '40px', color: '#666'}}>
+                                    <i className="fas fa-search fa-3x" style={{marginBottom: '15px', opacity: 0.3}}></i>
+                                    <p>Click "Scan Market" to find proactive trading opportunities based on technical analysis and market conditions.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Trading Signals Section */}
+                    {activeSection === 'signals' && (
+                        <div className="card">
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                <h3><i className="fas fa-signal"></i> Real-time Trading Signals</h3>
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={loadSignals}
+                                    disabled={loading.signals}
+                                >
+                                    {loading.signals ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync"></i>}
+                                    {loading.signals ? ' Updating...' : ' Refresh Signals'}
+                                </button>
+                            </div>
+
+                            {signals.length > 0 ? (
+                                <table className="trades-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ticker</th>
+                                            <th>Signal</th>
+                                            <th>Confidence</th>
+                                            <th>Target</th>
+                                            <th>Risk</th>
+                                            <th>Reasoning</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {signals.map((signal, index) => (
+                                            <tr key={index}>
+                                                <td><strong>{signal.ticker}</strong></td>
+                                                <td>
+                                                    <span style={{
+                                                        color: signal.action === 'BUY' ? '#28a745' : signal.action === 'SELL' ? '#dc3545' : '#6c757d',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        {signal.action}
+                                                    </span>
+                                                </td>
+                                                <td>{(signal.confidence * 100).toFixed(0)}%</td>
+                                                <td>£{signal.target_price?.toFixed(2) || 'N/A'}</td>
+                                                <td>
+                                                    <span style={{
+                                                        color: signal.risk_level === 'low' ? '#28a745' : signal.risk_level === 'high' ? '#dc3545' : '#ffc107'
+                                                    }}>
+                                                        {signal.risk_level}
+                                                    </span>
+                                                </td>
+                                                <td>{signal.reasoning}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div style={{textAlign: 'center', padding: '40px', color: '#666'}}>
+                                    <i className="fas fa-signal fa-3x" style={{marginBottom: '15px', opacity: 0.3}}></i>
+                                    <p>Click "Refresh Signals" to get the latest trading signals for your watchlist.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Analysis Section */}
+                    {activeSection === 'analysis' && (
+                        <div className="card">
+                            <h3><i className="fas fa-chart-bar"></i> Stock Analysis</h3>
+                            
+                            {loading.analysis && (
+                                <div style={{textAlign: 'center', padding: '40px'}}>
+                                    <i className="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p>Analyzing stock...</p>
+                                </div>
+                            )}
+
+                            {analysis && !loading.analysis && (
+                                <div style={{display: 'grid', gap: '20px', marginTop: '20px'}}>
+                                    {/* Overview */}
+                                    <div style={{
+                                        background: '#f8f9fa',
+                                        padding: '20px',
+                                        borderRadius: '10px',
+                                        border: '1px solid #e1e5e9'
+                                    }}>
+                                        <h4>{analysis.ticker} - Overview</h4>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginTop: '15px'}}>
+                                            <div>
+                                                <strong>Current Price:</strong><br/>
+                                                £{analysis.current_price?.toFixed(2)}
+                                            </div>
+                                            <div>
+                                                <strong>Change:</strong><br/>
+                                                <span style={{color: analysis.price_change_pct >= 0 ? '#28a745' : '#dc3545'}}>
+                                                    {analysis.price_change_pct > 0 ? '+' : ''}{analysis.price_change_pct?.toFixed(2)}%
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <strong>Volume:</strong><br/>
+                                                {analysis.volume_analysis}
+                                            </div>
+                                            <div>
+                                                <strong>Sentiment:</strong><br/>
+                                                <span style={{
+                                                    color: analysis.news_sentiment === 'positive' ? '#28a745' : 
+                                                           analysis.news_sentiment === 'negative' ? '#dc3545' : '#6c757d'
+                                                }}>
+                                                    {analysis.news_sentiment}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Recommendation */}
+                                    <div style={{
+                                        background: analysis.recommendation.action === 'BUY' ? '#d4edda' : 
+                                                   analysis.recommendation.action === 'SELL' ? '#f8d7da' : '#e2e3e5',
+                                        padding: '20px',
+                                        borderRadius: '10px',
+                                        border: '1px solid #e1e5e9'
+                                    }}>
+                                        <h4>
+                                            <i className="fas fa-lightbulb"></i> Recommendation: {analysis.recommendation.action}
+                                            <span style={{fontSize: '0.8rem', marginLeft: '10px'}}>
+                                                ({(analysis.recommendation.confidence * 100).toFixed(0)}% confidence)
+                                            </span>
+                                        </h4>
+                                        <p style={{margin: '10px 0', lineHeight: '1.6'}}>{analysis.recommendation.reasoning}</p>
+                                        {analysis.recommendation.target_price && (
+                                            <div style={{display: 'flex', gap: '20px', marginTop: '15px'}}>
+                                                <span><strong>Target Price:</strong> £{analysis.recommendation.target_price.toFixed(2)}</span>
+                                                <span><strong>Stop Loss:</strong> £{analysis.recommendation.stop_loss?.toFixed(2) || 'N/A'}</span>
+                                                <span><strong>Risk Level:</strong> {analysis.recommendation.risk_level}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Technical Indicators */}
+                                    {analysis.technical_signals && !analysis.technical_signals.error && (
+                                        <div style={{
+                                            background: '#f8f9fa',
+                                            padding: '20px',
+                                            borderRadius: '10px',
+                                            border: '1px solid #e1e5e9'
+                                        }}>
+                                            <h4>Technical Analysis</h4>
+                                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginTop: '15px'}}>
+                                                <div>
+                                                    <strong>Trend:</strong><br/>
+                                                    <span style={{
+                                                        color: analysis.technical_signals.trend === 'bullish' ? '#28a745' : 
+                                                               analysis.technical_signals.trend === 'bearish' ? '#dc3545' : '#6c757d'
+                                                    }}>
+                                                        {analysis.technical_signals.trend}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <strong>RSI:</strong><br/>
+                                                    {analysis.technical_signals.rsi?.toFixed(1)}
+                                                </div>
+                                                <div>
+                                                    <strong>MA 20:</strong><br/>
+                                                    £{analysis.technical_signals.ma_20?.toFixed(2)}
+                                                </div>
+                                                <div>
+                                                    <strong>Support:</strong><br/>
+                                                    £{analysis.technical_signals.support_level?.toFixed(2)}
+                                                </div>
+                                                <div>
+                                                    <strong>Resistance:</strong><br/>
+                                                    £{analysis.technical_signals.resistance_level?.toFixed(2)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {!analysis && !loading.analysis && (
+                                <div style={{textAlign: 'center', padding: '40px', color: '#666'}}>
+                                    <i className="fas fa-chart-bar fa-3x" style={{marginBottom: '15px', opacity: 0.3}}></i>
+                                    <p>Enter a stock ticker above to get detailed technical analysis, price targets, and trading recommendations.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Autonomous Trading Component
+        function AutonomousTrading() {
+            const [status, setStatus] = useState(null);
+            const [summary, setSummary] = useState(null);
+            const [loading, setLoading] = useState({});
+            const [isActive, setIsActive] = useState(false);
+
+            useEffect(() => {
+                loadStatus();
+                loadSummary();
+            }, []);
+
+            const loadStatus = async () => {
+                try {
+                    const response = await axios.get('/api/autonomous/status');
+                    setStatus(response.data);
+                    setIsActive(response.data.autonomous_active);
+                } catch (error) {
+                    console.error('Failed to load autonomous status:', error);
+                }
+            };
+
+            const loadSummary = async () => {
+                try {
+                    const response = await axios.get('/api/autonomous/summary');
+                    setSummary(response.data);
+                } catch (error) {
+                    console.error('Failed to load summary:', error);
+                }
+            };
+
+            const startAutonomousTrading = async () => {
+                setLoading({...loading, start: true});
+                try {
+                    const response = await axios.post('/api/autonomous/start');
+                    if (response.data.status === 'success') {
+                        alert('🤖 Autonomous trading cycle started!');
+                        loadStatus();
+                        loadSummary();
+                    } else {
+                        alert('Error: ' + response.data.message);
+                    }
+                } catch (error) {
+                    alert('Failed to start autonomous trading: ' + error.message);
+                } finally {
+                    setLoading({...loading, start: false});
+                }
+            };
+
+            const triggerGlobalScan = async () => {
+                setLoading({...loading, scan: true});
+                try {
+                    const response = await axios.get('/api/autonomous/global-scan');
+                    if (response.data.status === 'success') {
+                        alert(`🌍 Global market scan initiated! Scanning ${response.data.universe_size} assets across ${response.data.markets.length} markets.`);
+                    }
+                } catch (error) {
+                    alert('Failed to trigger global scan: ' + error.message);
+                } finally {
+                    setLoading({...loading, scan: false});
+                }
+            };
+
+            return (
+                <div className="autonomous-trading">
+                    <div className="card">
+                        <h3><i className="fas fa-robot"></i> AI Autonomous Trading</h3>
+                        <p>Your personal AI trading assistant that automatically scans global markets, executes trades, and manages your portfolio 24/7.</p>
+                        
+                        <div className="autonomous-status" style={{
+                            background: isActive ? 'linear-gradient(135deg, #28a745, #20c997)' : '#6c757d',
+                            color: 'white',
+                            padding: '20px',
+                            borderRadius: '15px',
+                            marginBottom: '20px',
+                            textAlign: 'center'
+                        }}>
+                            <h4><i className={`fas ${isActive ? 'fa-play-circle' : 'fa-pause-circle'}`}></i> 
+                                {isActive ? 'AI AUTOPILOT ACTIVE' : 'AI AUTOPILOT INACTIVE'}
+                            </h4>
+                            {status && (
+                                <div style={{marginTop: '10px', fontSize: '0.9rem'}}>
+                                    <div>Max Position: {(status.config?.max_position_size * 100)?.toFixed(0)}%</div>
+                                    <div>Crypto Allocation: {(status.config?.crypto_allocation * 100)?.toFixed(0)}%</div>
+                                    <div>Min Confidence: {(status.config?.min_confidence * 100)?.toFixed(0)}%</div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="autonomous-controls" style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                            gap: '15px',
+                            marginBottom: '20px'
+                        }}>
+                            <button 
+                                onClick={startAutonomousTrading}
+                                disabled={loading.start}
+                                style={{
+                                    background: 'linear-gradient(135deg, #007bff, #0056b3)',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '15px',
+                                    borderRadius: '10px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                {loading.start ? (
+                                    <><i className="fas fa-spinner fa-spin"></i> Starting...</>
+                                ) : (
+                                    <><i className="fas fa-rocket"></i> Run Daily Cycle</>
+                                )}
+                            </button>
+
+                            <button 
+                                onClick={triggerGlobalScan}
+                                disabled={loading.scan}
+                                style={{
+                                    background: 'linear-gradient(135deg, #28a745, #20c997)',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '15px',
+                                    borderRadius: '10px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                {loading.scan ? (
+                                    <><i className="fas fa-spinner fa-spin"></i> Scanning...</>
+                                ) : (
+                                    <><i className="fas fa-globe"></i> Global Market Scan</>
+                                )}
+                            </button>
+                        </div>
+
+                        {summary && summary.report && (
+                            <div className="daily-summary" style={{
+                                background: '#f8f9fa',
+                                border: '1px solid #dee2e6',
+                                borderRadius: '10px',
+                                padding: '20px',
+                                marginBottom: '20px'
+                            }}>
+                                <h4><i className="fas fa-chart-line"></i> Daily Summary Report</h4>
+                                <pre style={{
+                                    whiteSpace: 'pre-wrap',
+                                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                                    fontSize: '0.9rem',
+                                    lineHeight: '1.5',
+                                    margin: 0
+                                }}>
+                                    {summary.report}
+                                </pre>
+                            </div>
+                        )}
+
+                        <div className="autonomous-features" style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                            gap: '15px'
+                        }}>
+                            <div style={{
+                                background: 'rgba(40, 167, 69, 0.1)',
+                                border: '1px solid rgba(40, 167, 69, 0.2)',
+                                borderRadius: '10px',
+                                padding: '15px'
+                            }}>
+                                <h5><i className="fas fa-globe-americas"></i> Global Market Coverage</h5>
+                                <p>Scans US, UK, EU, Asia, Crypto, and Commodities markets automatically.</p>
+                            </div>
+
+                            <div style={{
+                                background: 'rgba(0, 123, 255, 0.1)',
+                                border: '1px solid rgba(0, 123, 255, 0.2)',
+                                borderRadius: '10px',
+                                padding: '15px'
+                            }}>
+                                <h5><i className="fas fa-shield-alt"></i> Risk Management</h5>
+                                <p>Automatic stop-losses, position sizing, and portfolio rebalancing.</p>
+                            </div>
+
+                            <div style={{
+                                background: 'rgba(255, 193, 7, 0.1)',
+                                border: '1px solid rgba(255, 193, 7, 0.2)',
+                                borderRadius: '10px',
+                                padding: '15px'
+                            }}>
+                                <h5><i className="fas fa-brain"></i> AI-Powered Analysis</h5>
+                                <p>Uses advanced technical analysis and sentiment scoring for trade decisions.</p>
+                            </div>
+
+                            <div style={{
+                                background: 'rgba(220, 53, 69, 0.1)',
+                                border: '1px solid rgba(220, 53, 69, 0.2)',
+                                borderRadius: '10px',
+                                padding: '15px'
+                            }}>
+                                <h5><i className="fas fa-clock"></i> 24/7 Operation</h5>
+                                <p>Continuously monitors markets and executes trades when opportunities arise.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

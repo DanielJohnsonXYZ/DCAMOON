@@ -12,8 +12,9 @@ import json
 import os
 import re
 import argparse
+import logging
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import pandas as pd
 
 # Import existing trading functions
@@ -27,6 +28,13 @@ try:
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 def generate_trading_prompt(portfolio_df: pd.DataFrame, cash: float, total_equity: float) -> str:
@@ -81,10 +89,14 @@ Only recommend trades you are confident about. If no trades are recommended, use
 
 
 def call_openai_api(prompt: str, api_key: str, model: str = "gpt-4") -> str:
-    """Call OpenAI API and return response"""
+    """Call OpenAI API and return response with improved error handling"""
     if not HAS_OPENAI:
         raise ImportError("openai package not installed. Run: pip install openai")
     
+    if not api_key or not api_key.strip():
+        raise ValueError("API key cannot be empty")
+    
+    logger.info(f"Making API call to {model}")
     client = openai.OpenAI(api_key=api_key)
     
     try:
@@ -95,146 +107,252 @@ def call_openai_api(prompt: str, api_key: str, model: str = "gpt-4") -> str:
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
-            max_tokens=1500
+            max_tokens=1500,
+            timeout=30
         )
-        return response.choices[0].message.content
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("Empty response from API")
+        
+        logger.info("API call successful")
+        return content
+    except openai.APIError as e:
+        logger.error(f"OpenAI API error: {e}")
+        return f'{{"error": "API error: {e}"}}'        
     except Exception as e:
-        return f'{{"error": "API call failed: {e}"}}'
+        logger.error(f"Unexpected error in API call: {e}")
+        return f'{{"error": "API call failed: {e}"}}'        
 
 
 def parse_llm_response(response: str) -> Dict[str, Any]:
-    """Parse LLM response and extract trading decisions"""
+    """Parse LLM response and extract trading decisions with improved error handling"""
     try:
+        # Clean the response
+        response = response.strip()
+        
         # Try to extract JSON from response
         json_match = re.search(r'\{.*\}', response, re.DOTALL)
         if json_match:
             json_str = json_match.group()
-            return json.loads(json_str)
+            result = json.loads(json_str)
+            logger.info("Successfully parsed LLM response")
+            return result
         else:
-            return json.loads(response)
+            # Try parsing the entire response as JSON
+            result = json.loads(response)
+            logger.info("Successfully parsed LLM response")
+            return result
     except json.JSONDecodeError as e:
-        print(f"Failed to parse LLM response: {e}")
-        print(f"Raw response: {response}")
+        logger.error(f"Failed to parse LLM response: {e}")
+        logger.debug(f"Raw response: {response}")
         return {"error": "Failed to parse response", "raw_response": response}
+    except Exception as e:
+        logger.error(f"Unexpected error parsing response: {e}")
+        return {"error": f"Parse error: {e}", "raw_response": response}
+
+
+def validate_trade(trade: Dict[str, Any]) -> Optional[str]:
+    """Validate a trade object and return error message if invalid"""
+    required_fields = ['action', 'ticker']
+    for field in required_fields:
+        if field not in trade or not trade[field]:
+            return f"Missing required field: {field}"
+    
+    action = trade.get('action', '').lower()
+    if action not in ['buy', 'sell', 'hold']:
+        return f"Invalid action: {action}"
+    
+    if action in ['buy', 'sell']:
+        try:
+            shares = float(trade.get('shares', 0))
+            price = float(trade.get('price', 0))
+            if shares <= 0 or price <= 0:
+                return f"Invalid shares ({shares}) or price ({price})"
+        except (ValueError, TypeError):
+            return "Invalid numeric values for shares or price"
+    
+    return None
 
 
 def execute_automated_trades(trades: List[Dict[str, Any]], portfolio_df: pd.DataFrame, cash: float) -> tuple[pd.DataFrame, float]:
-    """Execute trades recommended by LLM"""
+    """Execute trades recommended by LLM with improved validation and error handling"""
     
-    print(f"\n=== Executing {len(trades)} LLM-recommended trades ===")
+    logger.info(f"Executing {len(trades)} LLM-recommended trades")
+    executed_trades = 0
     
-    for trade in trades:
+    for i, trade in enumerate(trades):
+        # Validate trade
+        validation_error = validate_trade(trade)
+        if validation_error:
+            logger.error(f"Trade {i+1} validation failed: {validation_error}")
+            continue
+        
         action = trade.get('action', '').lower()
         ticker = trade.get('ticker', '').upper()
-        shares = float(trade.get('shares', 0))
-        price = float(trade.get('price', 0))
-        stop_loss = float(trade.get('stop_loss', 0))
         reason = trade.get('reason', 'LLM recommendation')
         
-        if action == 'buy':
-            if shares > 0 and price > 0 and ticker:
+        try:
+            if action == 'buy':
+                shares = float(trade.get('shares', 0))
+                price = float(trade.get('price', 0))
+                stop_loss = float(trade.get('stop_loss', 0))
                 cost = shares * price
+                
                 if cost <= cash:
-                    print(f"BUY: {shares} shares of {ticker} at ${price:.2f} (stop: ${stop_loss:.2f}) - {reason}")
-                    # Here you would call the actual buy function from trading_script
-                    # For now, just simulate the trade
+                    logger.info(f"BUY: {shares} shares of {ticker} at ${price:.2f} (stop: ${stop_loss:.2f}) - {reason}")
+                    # TODO: Replace with actual buy function from trading_script
                     cash -= cost
-                    print(f"  Simulated: Cash reduced by ${cost:.2f}, new balance: ${cash:.2f}")
+                    executed_trades += 1
+                    logger.info(f"Trade executed - Cash reduced by ${cost:.2f}, new balance: ${cash:.2f}")
                 else:
-                    print(f"BUY REJECTED: {ticker} - Insufficient cash (need ${cost:.2f}, have ${cash:.2f})")
-            else:
-                print(f"INVALID BUY ORDER: {trade}")
-        
-        elif action == 'sell':
-            if shares > 0 and price > 0 and ticker:
+                    logger.warning(f"BUY REJECTED: {ticker} - Insufficient cash (need ${cost:.2f}, have ${cash:.2f})")
+            
+            elif action == 'sell':
+                shares = float(trade.get('shares', 0))
+                price = float(trade.get('price', 0))
                 proceeds = shares * price
-                print(f"SELL: {shares} shares of {ticker} at ${price:.2f} - {reason}")
-                # Here you would call the actual sell function from trading_script
-                # For now, just simulate the trade
+                logger.info(f"SELL: {shares} shares of {ticker} at ${price:.2f} - {reason}")
+                # TODO: Replace with actual sell function from trading_script
                 cash += proceeds
-                print(f"  Simulated: Cash increased by ${proceeds:.2f}, new balance: ${cash:.2f}")
-            else:
-                print(f"INVALID SELL ORDER: {trade}")
-        
-        elif action == 'hold':
-            print(f"HOLD: {ticker} - {reason}")
-        
-        else:
-            print(f"UNKNOWN ACTION: {action} for {ticker}")
+                executed_trades += 1
+                logger.info(f"Trade executed - Cash increased by ${proceeds:.2f}, new balance: ${cash:.2f}")
+            
+            elif action == 'hold':
+                logger.info(f"HOLD: {ticker} - {reason}")
+                executed_trades += 1
+                
+        except Exception as e:
+            logger.error(f"Error executing trade {i+1}: {e}")
     
+    logger.info(f"Executed {executed_trades}/{len(trades)} trades successfully")
     return portfolio_df, cash
 
 
 def run_automated_trading(api_key: str, model: str = "gpt-4", data_dir: str = "Start Your Own", dry_run: bool = False):
-    """Run the automated trading process"""
+    """Run the automated trading process with comprehensive error handling"""
     
-    print("=== Automated Trading System ===")
+    logger.info("Starting automated trading system")
     
-    # Set up data directory
-    data_path = Path(data_dir)
-    set_data_dir(data_path)
-    
-    # Load current portfolio
-    portfolio_file = data_path / "chatgpt_portfolio_update.csv"
-    if portfolio_file.exists():
-        portfolio_df, cash = load_latest_portfolio_state(str(portfolio_file))
-    else:
-        portfolio_df = pd.DataFrame(columns=["ticker", "shares", "stop_loss", "buy_price", "cost_basis"])
-        cash = 10000.0  # Default starting cash
-    
-    # Calculate total equity (simplified)
-    total_value = portfolio_df['cost_basis'].sum() if not portfolio_df.empty and 'cost_basis' in portfolio_df.columns else 0.0
-    total_equity = cash + total_value
-    
-    print(f"Portfolio loaded: ${cash:,.2f} cash, ${total_equity:,.2f} total equity")
-    
-    # Generate prompt
-    prompt = generate_trading_prompt(portfolio_df, cash, total_equity)
-    print(f"\nGenerated prompt ({len(prompt)} characters)")
-    
-    # Call LLM
-    print("Calling LLM for trading recommendations...")
-    response = call_openai_api(prompt, api_key, model)
-    print(f"Received response ({len(response)} characters)")
-    
-    # Parse response
-    parsed_response = parse_llm_response(response)
-    
-    if "error" in parsed_response:
-        print(f"Error: {parsed_response['error']}")
-        return
-    
-    # Display analysis
-    analysis = parsed_response.get('analysis', 'No analysis provided')
-    confidence = parsed_response.get('confidence', 0.0)
-    trades = parsed_response.get('trades', [])
-    
-    print(f"\n=== LLM Analysis ===")
-    print(f"Analysis: {analysis}")
-    print(f"Confidence: {confidence:.1%}")
-    print(f"Recommended trades: {len(trades)}")
-    
-    # Execute trades
-    if trades and not dry_run:
-        portfolio_df, cash = execute_automated_trades(trades, portfolio_df, cash)
-    elif trades and dry_run:
-        print(f"\n=== DRY RUN - Would execute {len(trades)} trades ===")
-        for trade in trades:
-            print(f"  {trade.get('action', 'unknown').upper()}: {trade.get('shares', 0)} shares of {trade.get('ticker', 'unknown')} at ${trade.get('price', 0):.2f}")
-    else:
-        print("No trades recommended")
-    
-    # Save the LLM response for review
-    response_file = data_path / "llm_responses.jsonl"
-    with open(response_file, "a") as f:
-        f.write(json.dumps({
-            "timestamp": pd.Timestamp.now().isoformat(),
-            "response": parsed_response,
-            "raw_response": response
-        }) + "\n")
-    
-    print(f"\n=== Analysis Complete ===")
-    print(f"Response saved to: {response_file}")
+    try:
+        # Validate inputs
+        if not api_key or not api_key.strip():
+            raise ValueError("API key is required")
+        
+        # Set up data directory
+        data_path = Path(data_dir)
+        if not data_path.exists():
+            logger.warning(f"Data directory does not exist: {data_path}")
+            data_path.mkdir(parents=True, exist_ok=True)
+        
+        set_data_dir(data_path)
+        
+        # Load current portfolio
+        portfolio_file = data_path / "chatgpt_portfolio_update.csv"
+        try:
+            if portfolio_file.exists():
+                portfolio_data, cash = load_latest_portfolio_state()
+                # Convert list of dicts to DataFrame
+                if isinstance(portfolio_data, list):
+                    portfolio_df = pd.DataFrame(portfolio_data)
+                elif isinstance(portfolio_data, pd.DataFrame):
+                    portfolio_df = portfolio_data.copy()
+                else:
+                    logger.warning(f"Unexpected portfolio data type: {type(portfolio_data)}")
+                    portfolio_df = pd.DataFrame(columns=["ticker", "shares", "stop_loss", "buy_price", "cost_basis"])
+                logger.info("Portfolio loaded successfully")
+            else:
+                logger.warning("Portfolio file not found, using defaults")
+                portfolio_df = pd.DataFrame(columns=["ticker", "shares", "stop_loss", "buy_price", "cost_basis"])
+                cash = 10000.0  # Default starting cash
+        except Exception as e:
+            logger.error(f"Error loading portfolio: {e}")
+            portfolio_df = pd.DataFrame(columns=["ticker", "shares", "stop_loss", "buy_price", "cost_basis"])
+            cash = 10000.0
+        
+        # Ensure portfolio_df has the expected structure
+        expected_cols = ["ticker", "shares", "stop_loss", "buy_price", "cost_basis"]
+        for col in expected_cols:
+            if col not in portfolio_df.columns:
+                portfolio_df[col] = 0.0 if col in ["shares", "stop_loss", "buy_price", "cost_basis"] else ""
+        
+        # Calculate total equity
+        try:
+            if not portfolio_df.empty and 'cost_basis' in portfolio_df.columns:
+                # Convert to numeric and handle errors
+                cost_basis_series = pd.to_numeric(portfolio_df['cost_basis'], errors='coerce').fillna(0.0)
+                total_value = cost_basis_series.sum()
+            else:
+                total_value = 0.0
+            total_equity = cash + total_value
+        except Exception as e:
+            logger.error(f"Error calculating total equity: {e}")
+            total_value = 0.0
+            total_equity = cash
+        
+        logger.info(f"Portfolio loaded: ${cash:,.2f} cash, ${total_equity:,.2f} total equity")
+        
+        # Generate prompt
+        prompt = generate_trading_prompt(portfolio_df, cash, total_equity)
+        logger.info(f"Generated prompt ({len(prompt)} characters)")
+        
+        # Call LLM
+        logger.info("Calling LLM for trading recommendations")
+        response = call_openai_api(prompt, api_key, model)
+        logger.info(f"Received response ({len(response)} characters)")
+        
+        # Parse response
+        parsed_response = parse_llm_response(response)
+        
+        if "error" in parsed_response:
+            logger.error(f"LLM response error: {parsed_response['error']}")
+            return
+        
+        # Display analysis
+        analysis = parsed_response.get('analysis', 'No analysis provided')
+        confidence = parsed_response.get('confidence', 0.0)
+        trades = parsed_response.get('trades', [])
+        
+        logger.info(f"LLM Analysis - Confidence: {confidence:.1%}, Trades: {len(trades)}")
+        print(f"\n=== LLM Analysis ===")
+        print(f"Analysis: {analysis}")
+        print(f"Confidence: {confidence:.1%}")
+        print(f"Recommended trades: {len(trades)}")
+        
+        # Execute trades
+        if trades and not dry_run:
+            portfolio_df, cash = execute_automated_trades(trades, portfolio_df, cash)
+        elif trades and dry_run:
+            logger.info(f"DRY RUN - Would execute {len(trades)} trades")
+            print(f"\n=== DRY RUN - Would execute {len(trades)} trades ===")
+            for trade in trades:
+                action = trade.get('action', 'unknown').upper()
+                shares = trade.get('shares', 0)
+                ticker = trade.get('ticker', 'unknown')
+                price = trade.get('price', 0)
+                print(f"  {action}: {shares} shares of {ticker} at ${price:.2f}")
+        else:
+            logger.info("No trades recommended")
+            print("No trades recommended")
+        
+        # Save the LLM response for review
+        try:
+            response_file = data_path / "llm_responses.jsonl"
+            with open(response_file, "a", encoding='utf-8') as f:
+                f.write(json.dumps({
+                    "timestamp": pd.Timestamp.now().isoformat(),
+                    "response": parsed_response,
+                    "raw_response": response
+                }, ensure_ascii=False) + "\n")
+            logger.info(f"Response saved to: {response_file}")
+        except Exception as e:
+            logger.error(f"Error saving response: {e}")
+        
+        logger.info("Automated trading process completed")
+        print(f"\n=== Analysis Complete ===")
+        
+    except Exception as e:
+        logger.error(f"Error in automated trading process: {e}")
+        print(f"Error: {e}")
 
 
 def main():
@@ -244,22 +362,37 @@ def main():
     parser.add_argument("--model", default="gpt-4", help="OpenAI model to use")
     parser.add_argument("--data-dir", default="Start Your Own", help="Data directory")
     parser.add_argument("--dry-run", action="store_true", help="Don't execute trades, just show recommendations")
+    parser.add_argument("--execute-real-trades", action="store_true", 
+                       help="Execute real trades (WARNING: This will modify your portfolio!)")
     
     args = parser.parse_args()
     
     # Get API key
     api_key = args.api_key or os.getenv("OPENAI_API_KEY")
     if not api_key:
+        logger.error("OpenAI API key required")
         print("Error: OpenAI API key required. Set OPENAI_API_KEY env var or use --api-key")
-        return
+        return 1
     
-    # Run automated trading
-    run_automated_trading(
-        api_key=api_key,
-        model=args.model,
-        data_dir=args.data_dir,
-        dry_run=args.dry_run
-    )
+    # Validate trade execution settings
+    if args.execute_real_trades and not args.dry_run:
+        logger.warning("REAL TRADES ENABLED - This will modify your portfolio!")
+        print("WARNING: Real trade execution is enabled. This will modify your portfolio!")
+    
+    try:
+        # Run automated trading
+        run_automated_trading(
+            api_key=api_key,
+            model=args.model,
+            data_dir=args.data_dir,
+            dry_run=args.dry_run,
+            execute_real_trades=args.execute_real_trades and not args.dry_run
+        )
+        return 0
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+        print(f"Fatal error: {e}")
+        return 1
 
 
 if __name__ == "__main__":
