@@ -269,9 +269,11 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // API service
+        // API service - automatically detects if running locally or on Railway
         const api = axios.create({
-            baseURL: 'http://localhost:5004'
+            baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                ? 'http://localhost:5004' 
+                : '' // Use same domain when deployed
         });
 
         // Main App Component
