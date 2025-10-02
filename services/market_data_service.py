@@ -12,6 +12,8 @@ from sqlalchemy import desc
 
 from database.models import MarketData
 from database.database import db_session_scope
+from utils.retry import retry_with_backoff
+from utils.validation import validate_ticker
 
 # Import existing market data functions
 import sys
@@ -28,42 +30,51 @@ class MarketDataService:
     def __init__(self, cache_duration_minutes: int = 15):
         self.cache_duration = timedelta(minutes=cache_duration_minutes)
     
+    @retry_with_backoff(max_retries=3, exceptions=(ConnectionError, TimeoutError))
     def get_current_price(self, ticker: str, use_cache: bool = True) -> Optional[float]:
-        """Get current price for a ticker with caching.
-        
+        """Get current price for a ticker with caching and retry logic.
+
         Args:
             ticker: Stock ticker symbol
             use_cache: Whether to use cached data if available
-            
+
         Returns:
             Current price or None if unavailable
         """
-        ticker = ticker.upper()
-        
+        # Validate ticker
+        ticker = validate_ticker(ticker)
+
         try:
             # Check cache first
             if use_cache:
                 cached_price = self._get_cached_price(ticker)
                 if cached_price is not None:
+                    logger.debug(f"Using cached price for {ticker}: ${cached_price:.2f}")
                     return cached_price
-            
-            # Fetch fresh data
+
+            # Fetch fresh data with retry logic built-in
             fetch_result = download_price_data(ticker, period="1d")
-            
+
             if not fetch_result.df.empty:
                 current_price = float(fetch_result.df['Close'].iloc[-1])
-                
+
                 # Cache the result
                 self._cache_market_data(ticker, fetch_result, datetime.now())
-                
+
                 logger.debug(f"Fetched current price for {ticker}: ${current_price:.2f}")
                 return current_price
             else:
                 logger.warning(f"No market data available for {ticker}")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error getting current price for {ticker}: {e}")
+            # Return cached data if available as fallback
+            if use_cache:
+                stale_price = self._get_cached_price(ticker, allow_stale=True)
+                if stale_price:
+                    logger.warning(f"Using stale cached price for {ticker}: ${stale_price:.2f}")
+                    return stale_price
             return None
     
     def get_historical_data(

@@ -30,6 +30,17 @@ import json
 import logging
 import sys
 
+# Import file locking utilities
+from utils.file_lock import locked_csv_write, file_lock
+
+# Helper function for safe CSV writes
+def _safe_csv_write(df: pd.DataFrame, file_path: Path) -> None:
+    """Write DataFrame to CSV with file locking and atomic write"""
+    with file_lock(file_path, timeout=30.0):
+        temp_file = Path(str(file_path) + '.tmp')
+        df.to_csv(temp_file, index=False)
+        temp_file.replace(file_path)
+
 # Optional pandas-datareader import for Stooq access
 try:
     import pandas_datareader.data as pdr
@@ -534,7 +545,7 @@ Would you like to log a manual trade? Enter 'b' for buy, 's' for sell, or press 
                     else:
                         df_log = pd.DataFrame([log])
                     logger.info("Writing CSV file: %s", TRADE_LOG_CSV)
-                    df_log.to_csv(TRADE_LOG_CSV, index=False)
+                    _safe_csv_write(df_log, TRADE_LOG_CSV)
                     logger.info("Successfully wrote CSV file: %s", TRADE_LOG_CSV)
 
                     rows = portfolio_df.loc[portfolio_df["ticker"].astype(str).str.upper() == ticker.upper()]
@@ -673,16 +684,23 @@ Would you like to log a manual trade? Enter 'b' for buy, 's' for sell, or press 
     results.append(total_row)
 
     df_out = pd.DataFrame(results)
-    if PORTFOLIO_CSV.exists():
-        logger.info("Reading CSV file: %s", PORTFOLIO_CSV)
-        existing = pd.read_csv(PORTFOLIO_CSV)
-        logger.info("Successfully read CSV file: %s", PORTFOLIO_CSV)
-        existing = existing[existing["Date"] != str(today_iso)]
-        print("Saving results to CSV...")
-        df_out = pd.concat([existing, df_out], ignore_index=True)
-    logger.info("Writing CSV file: %s", PORTFOLIO_CSV)
-    df_out.to_csv(PORTFOLIO_CSV, index=False)
-    logger.info("Successfully wrote CSV file: %s", PORTFOLIO_CSV)
+
+    # Use file locking to prevent corruption from concurrent access
+    with file_lock(PORTFOLIO_CSV, timeout=30.0):
+        if PORTFOLIO_CSV.exists():
+            logger.info("Reading CSV file: %s", PORTFOLIO_CSV)
+            existing = pd.read_csv(PORTFOLIO_CSV)
+            logger.info("Successfully read CSV file: %s", PORTFOLIO_CSV)
+            existing = existing[existing["Date"] != str(today_iso)]
+            print("Saving results to CSV...")
+            df_out = pd.concat([existing, df_out], ignore_index=True)
+
+        logger.info("Writing CSV file: %s", PORTFOLIO_CSV)
+        # Use atomic write to prevent partial writes
+        temp_file = Path(str(PORTFOLIO_CSV) + '.tmp')
+        df_out.to_csv(temp_file, index=False)
+        temp_file.replace(PORTFOLIO_CSV)
+        logger.info("Successfully wrote CSV file: %s", PORTFOLIO_CSV)
 
     return portfolio_df, cash
 
@@ -724,7 +742,7 @@ def log_sell(
     else:
         df = pd.DataFrame([log])
     logger.info("Writing CSV file: %s", TRADE_LOG_CSV)
-    df.to_csv(TRADE_LOG_CSV, index=False)
+    _safe_csv_write(df, TRADE_LOG_CSV)
     logger.info("Successfully wrote CSV file: %s", TRADE_LOG_CSV)
     return portfolio
 
@@ -799,7 +817,7 @@ def log_manual_buy(
     else:
         df = pd.DataFrame([log])
     logger.info("Writing CSV file: %s", TRADE_LOG_CSV)
-    df.to_csv(TRADE_LOG_CSV, index=False)
+    _safe_csv_write(df, TRADE_LOG_CSV)
     logger.info("Successfully wrote CSV file: %s", TRADE_LOG_CSV)
 
     rows = chatgpt_portfolio.loc[chatgpt_portfolio["ticker"].str.upper() == ticker.upper()]
@@ -912,7 +930,7 @@ If this is a mistake, enter 1, or hit Enter."""
     else:
         df = pd.DataFrame([log])
     logger.info("Writing CSV file: %s", TRADE_LOG_CSV)
-    df.to_csv(TRADE_LOG_CSV, index=False)
+    _safe_csv_write(df, TRADE_LOG_CSV)
     logger.info("Successfully wrote CSV file: %s", TRADE_LOG_CSV)
 
 

@@ -13,6 +13,13 @@ from sqlalchemy import desc, func
 from database.models import Portfolio, Position, Trade, PortfolioSnapshot, PositionSnapshot
 from database.database import db_session_scope
 from .market_data_service import MarketDataService
+from utils.validation import (
+    validate_ticker, validate_shares, validate_price,
+    validate_trade_amount, validate_trade_type,
+    validate_portfolio_id, validate_position_size,
+    ValidationError
+)
+from utils.retry import retry_with_backoff
 
 logger = logging.getLogger(__name__)
 
@@ -139,16 +146,32 @@ class PortfolioService:
             RuntimeError: If execution fails
         """
         try:
-            ticker = ticker.upper()
-            trade_type = trade_type.upper()
-            
-            # Critical security validation: prevent negative/zero values
-            if shares <= 0:
-                raise ValueError(f"Invalid shares: {shares}. Shares must be positive.")
-            if price <= 0:
-                raise ValueError(f"Invalid price: {price}. Price must be positive.")
-            
-            total_amount = shares * price
+            # Comprehensive input validation
+            portfolio_id = validate_portfolio_id(portfolio_id)
+            ticker = validate_ticker(ticker)
+            trade_type = validate_trade_type(trade_type)
+            shares = validate_shares(shares)
+            price = validate_price(price, ticker)
+
+            # Get portfolio first to check available cash/position size
+            with db_session_scope() as check_session:
+                portfolio = check_session.query(Portfolio).filter(
+                    Portfolio.id == portfolio_id
+                ).first()
+
+                if not portfolio:
+                    raise ValidationError(f"Portfolio {portfolio_id} not found")
+
+                # Calculate total including position size validation for buys
+                available_cash = float(portfolio.current_cash) if trade_type == 'BUY' else None
+                total_amount = validate_trade_amount(shares, price, available_cash, ticker)
+
+                # Validate position sizing for buys
+                if trade_type == 'BUY':
+                    portfolio_value = float(portfolio.current_cash)  # Simplified, should include positions
+                    from config import get_config
+                    config = get_config()
+                    validate_position_size(total_amount, portfolio_value, config.max_position_size, ticker)
             
             with db_session_scope() as session:
                 # Get portfolio

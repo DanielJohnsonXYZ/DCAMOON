@@ -28,20 +28,60 @@ class SecurityManager:
         self._cipher = self._create_cipher(self._master_key)
     
     def _get_or_create_master_key(self) -> str:
-        """Get master key from environment or create new one."""
+        """Get master key from environment or create and persist new one."""
         env_key = os.getenv('DCAMOON_MASTER_KEY')
         if env_key:
+            logger.info("Using master key from environment variable")
             return env_key
-        
-        # Generate new key
+
+        # Check for persisted key file
+        key_file = self._get_key_file_path()
+        if key_file.exists():
+            try:
+                with open(key_file, 'r') as f:
+                    key = f.read().strip()
+                logger.info(f"Loaded master key from {key_file}")
+                return key
+            except Exception as e:
+                logger.error(f"Failed to load key from {key_file}: {e}")
+
+        # Generate new key and persist it
         key = Fernet.generate_key().decode()
-        logger.critical(
-            "SECURITY: No master key found in environment. "
-            "A new encryption key has been generated but will be lost on restart. "
-            "Set DCAMOON_MASTER_KEY environment variable with a secure key for production use."
-        )
-        # Note: Key is NOT logged for security reasons
+        try:
+            # Ensure directory exists
+            key_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # Write key with restrictive permissions
+            with open(key_file, 'w') as f:
+                f.write(key)
+
+            # Set file permissions (Unix only)
+            try:
+                import stat
+                os.chmod(key_file, stat.S_IRUSR | stat.S_IWUSR)  # 0o600
+            except Exception:
+                pass  # Windows doesn't support chmod
+
+            logger.critical(
+                f"SECURITY: Generated new master encryption key and saved to {key_file}\n"
+                f"IMPORTANT: Back up this file and keep it secure!\n"
+                f"For better security, set DCAMOON_MASTER_KEY environment variable instead."
+            )
+        except Exception as e:
+            logger.error(f"Failed to persist encryption key to {key_file}: {e}")
+            logger.critical(
+                "SECURITY: Generated encryption key could NOT be saved. "
+                "Encrypted data will be lost on restart! "
+                "Set DCAMOON_MASTER_KEY environment variable for persistence."
+            )
+
         return key
+
+    def _get_key_file_path(self):
+        """Get path to encryption key file."""
+        from pathlib import Path
+        # Store in user's home directory for security
+        return Path.home() / '.dcamoon' / 'master.key'
     
     def _create_cipher(self, key: str) -> Fernet:
         """Create Fernet cipher from key."""
@@ -51,9 +91,10 @@ class SecurityManager:
         except Exception:
             # Derive key from password using PBKDF2
             password = key.encode()
-            # Use environment salt or fall back to static (for backward compatibility)
-            env_salt = os.getenv('DCAMOON_SALT', 'dcamoon_salt')
-            salt = env_salt.encode()
+
+            # Get or create salt
+            salt = self._get_or_create_salt()
+
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
@@ -62,6 +103,51 @@ class SecurityManager:
             )
             key_bytes = base64.urlsafe_b64encode(kdf.derive(password))
             return Fernet(key_bytes)
+
+    def _get_or_create_salt(self) -> bytes:
+        """Get salt from environment or generate and persist a new one."""
+        env_salt = os.getenv('DCAMOON_SALT')
+        if env_salt:
+            return env_salt.encode()
+
+        # Check for persisted salt file
+        salt_file = self._get_salt_file_path()
+        if salt_file.exists():
+            try:
+                with open(salt_file, 'r') as f:
+                    salt = f.read().strip()
+                return salt.encode()
+            except Exception as e:
+                logger.error(f"Failed to load salt from {salt_file}: {e}")
+
+        # Generate new random salt
+        salt = base64.urlsafe_b64encode(os.urandom(16)).decode()
+
+        try:
+            # Ensure directory exists
+            salt_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # Write salt
+            with open(salt_file, 'w') as f:
+                f.write(salt)
+
+            # Set file permissions (Unix only)
+            try:
+                import stat
+                os.chmod(salt_file, stat.S_IRUSR | stat.S_IWUSR)  # 0o600
+            except Exception:
+                pass  # Windows doesn't support chmod
+
+            logger.info(f"Generated and saved new salt to {salt_file}")
+        except Exception as e:
+            logger.error(f"Failed to persist salt to {salt_file}: {e}")
+
+        return salt.encode()
+
+    def _get_salt_file_path(self):
+        """Get path to salt file."""
+        from pathlib import Path
+        return Path.home() / '.dcamoon' / 'salt.dat'
     
     def encrypt_api_key(self, api_key: str) -> str:
         """Encrypt an API key for secure storage.

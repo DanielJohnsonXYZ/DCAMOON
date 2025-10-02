@@ -19,6 +19,7 @@ import pandas as pd
 
 # Import existing trading functions
 from services.portfolio_service import PortfolioService
+from utils.portfolio_helper import get_default_portfolio_id
 from trading_script import (
     process_portfolio, daily_results, load_latest_portfolio_state,
     set_data_dir, PORTFOLIO_CSV, TRADE_LOG_CSV, last_trading_date
@@ -312,8 +313,8 @@ def run_automated_trading(api_key: str, model: str = "gpt-4", data_dir: str = "S
                 # Initialize database and portfolio service
                 initialize_database()
                 portfolio_service = PortfolioService()
-                portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'  # Default portfolio ID
-                logger.info("Portfolio service initialized for real trade execution")
+                portfolio_id = get_default_portfolio_id()
+                logger.info(f"Portfolio service initialized for real trade execution (ID: {portfolio_id})")
             except Exception as e:
                 logger.error(f"Failed to initialize portfolio service: {e}")
                 raise ValueError(f"Cannot execute real trades: {e}")

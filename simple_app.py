@@ -18,9 +18,21 @@ from database.database import initialize_database
 from services.portfolio_service import PortfolioService
 from services.research_service import ResearchService
 from services.autonomous_trader import AutonomousTrader, AutonomousConfig
+from utils.portfolio_helper import get_default_portfolio_id
+from utils.startup import run_startup_checks, print_startup_banner, StartupError
 
 app = Flask(__name__)
 CORS(app)
+
+# Run startup validation before initializing services
+try:
+    print_startup_banner("DCAMOON Autonomous", "1.0.0")
+    run_startup_checks(require_openai=True, require_database=True)
+except StartupError as e:
+    logger.critical(f"Startup validation failed:\n{e}")
+    print(f"\nERROR: {e}\n")
+    print("Please fix the configuration issues and try again.")
+    exit(1)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,7 +51,8 @@ try:
         crypto_allocation=0.20,  # 20% crypto
         min_confidence=0.60      # 60% minimum confidence
     )
-    autonomous_trader = AutonomousTrader('c49d9e6f-a4c2-4524-81d1-96a8e5672d52', autonomous_config)
+    default_portfolio_id = get_default_portfolio_id()
+    autonomous_trader = AutonomousTrader(default_portfolio_id, autonomous_config)
     
     logger.info("Services initialized successfully")
 except Exception as e:
@@ -59,8 +72,8 @@ def index():
 def api_portfolio():
     """API endpoint for portfolio data"""
     try:
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         from database.database import db_session_scope
         from database.models import Portfolio, Position
         
@@ -128,8 +141,8 @@ def api_portfolio():
 def api_trades():
     """API endpoint for trade history"""
     try:
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         from database.database import db_session_scope
         from database.models import Trade
         from sqlalchemy import desc
@@ -163,8 +176,8 @@ def api_trades():
 def api_chart():
     """API endpoint for portfolio performance chart"""
     try:
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         from database.database import db_session_scope
         from database.models import PortfolioSnapshot
         import matplotlib
@@ -228,8 +241,8 @@ def api_execute_trade():
     try:
         from flask import request
         data = request.get_json()
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         # Validate required fields
         required_fields = ['ticker', 'trade_type', 'shares', 'price']
         for field in required_fields:
@@ -273,13 +286,13 @@ def api_recommendations():
         api_key = os.getenv('OPENAI_API_KEY')
         if not api_key:
             return jsonify({
-                'status': 'error', 
+                'status': 'error',
                 'message': 'OpenAI API key not configured. Set OPENAI_API_KEY environment variable.'
             }), 400
-        
+
         # Get current portfolio data
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         from database.database import db_session_scope
         from database.models import Portfolio, Position, Trade
         
@@ -343,8 +356,8 @@ def api_recommendations():
 def api_research_opportunities():
     """Get proactive trading opportunities"""
     try:
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         # Get portfolio context
         from database.database import db_session_scope
         with db_session_scope() as session:
@@ -402,8 +415,8 @@ def api_research_opportunities():
 def api_research_analyze(ticker):
     """Get detailed research analysis for a specific ticker"""
     try:
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         # Get portfolio context
         from database.database import db_session_scope
         with db_session_scope() as session:
@@ -455,8 +468,8 @@ def api_research_analyze(ticker):
 def api_research_signals():
     """Get trading signals for watchlist"""
     try:
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         # Default watchlist
         watchlist = ['VWRP.L', 'VUSA.L', 'TSLA', 'AAPL', 'MSFT']
         
@@ -616,8 +629,10 @@ def health_check():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5004))
-    debug = os.environ.get('FLASK_ENV') != 'production'
-    
-    print("DCAMOON Autonomous Trading Platform")
-    print(f"Starting server on port {port}")
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() in ['true', '1', 'yes']
+
+    if debug:
+        logger.warning("Running in DEBUG mode - not recommended for production!")
+
+    print(f"\n✓ Server starting on http://0.0.0.0:{port}\n")
     app.run(host='0.0.0.0', port=port, debug=debug)

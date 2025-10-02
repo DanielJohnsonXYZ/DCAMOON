@@ -30,9 +30,20 @@ from typing import Dict, Any, Optional, Tuple
 from database.database import initialize_database, db_session_scope
 from services.portfolio_service import PortfolioService
 from services.market_data_service import MarketDataService
+from utils.portfolio_helper import get_default_portfolio_id
+from utils.startup import run_startup_checks, print_startup_banner, StartupError
 
 app = Flask(__name__)
 CORS(app)
+
+# Run startup validation
+try:
+    run_startup_checks(require_openai=False, require_database=True)
+except StartupError as e:
+    logger.critical(f"Startup validation failed:\n{e}")
+    print(f"\nERROR: {e}\n")
+    print("Please fix the configuration issues and try again.")
+    exit(1)
 
 # Initialize database and services
 db_manager = initialize_database()
@@ -283,8 +294,8 @@ def index():
 def api_portfolio():
     """API endpoint for portfolio data"""
     try:
-        # Get the migrated portfolio (your main portfolio)
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
+        # Get the default portfolio from environment or database
+        portfolio_id = get_default_portfolio_id()
         summary = portfolio_service.get_portfolio_summary(portfolio_id)
         positions = portfolio_service.get_positions(portfolio_id)
         
@@ -307,7 +318,7 @@ def api_portfolio():
 def api_chart():
     """API endpoint for performance chart"""
     try:
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
+        portfolio_id = get_default_portfolio_id()
         chart_data = create_database_performance_chart(portfolio_id)
         return jsonify({'chart': chart_data, 'status': 'success'})
     except Exception as e:
@@ -318,8 +329,8 @@ def api_chart():
 def api_trades():
     """API endpoint for trade history"""
     try:
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         with db_session_scope() as session:
             from database.models import Trade
             from sqlalchemy import desc
@@ -353,8 +364,8 @@ def api_execute_trade():
     """API endpoint to execute a trade"""
     try:
         data = request.get_json()
-        portfolio_id = 'c49d9e6f-a4c2-4524-81d1-96a8e5672d52'
-        
+        portfolio_id = get_default_portfolio_id()
+
         # Validate required fields
         required_fields = ['ticker', 'trade_type', 'shares', 'price']
         for field in required_fields:
@@ -465,9 +476,17 @@ app.template_folder = 'templates'
 if __name__ == '__main__':
     # Ensure templates directory exists
     os.makedirs('templates', exist_ok=True)
-    
-    print("ChatGPT Micro-Cap Trading Dashboard")
-    print("Starting Flask server on http://0.0.0.0:5001")
-    print("Dashboard will display trading results and portfolio performance")
-    
-    app.run(host='0.0.0.0', port=5001, debug=True)
+
+    # Print startup banner
+    print_startup_banner("DCAMOON Dashboard", "1.0.0")
+
+    port = int(os.getenv('PORT', 5001))
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() in ['true', '1', 'yes']
+
+    if debug:
+        logger.warning("Running in DEBUG mode - not recommended for production!")
+
+    print(f"\n✓ Server starting on http://0.0.0.0:{port}")
+    print(f"✓ Dashboard will display trading results and portfolio performance\n")
+
+    app.run(host='0.0.0.0', port=port, debug=debug)
